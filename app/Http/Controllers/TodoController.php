@@ -22,7 +22,7 @@ class TodoController extends Controller
         }
 
 
-        $todo = Todo::create($request->all());
+        $todo = $request->user()->todos()->create($request->all());
 
         return response()->json([
             "data" => $todo,
@@ -31,6 +31,10 @@ class TodoController extends Controller
         ], 201);
     }
     public function update(Request $request, Todo $todo){
+        if($request->user()->id != $todo->user_id)
+            return $this->Forbidden("You don't have permission to edit this todo!");
+
+
         $validator = validator($request->all(), [
             "title"=> ["required", "max:255", "string"],
         ]);
@@ -54,21 +58,25 @@ class TodoController extends Controller
     }
 
 
-    public function index(){
+    public function index(Request $request){
         return response()->json([
-            "data" => Todo::all(),
+            "data" => $request->user()->todos,
             "message" => "Successfully retrieved!",
             "ok" => true
         ]);
     }
-    public function show(Todo $todo){
+    public function show(Request $request, Todo $todo){
+        if($request->user()->id != $todo->user_id)
+            return $this->Forbidden("You don't have permission to view this todo!");
         return response()->json([
             "data" => $todo,
             "message" => "Successfully retrieved!",
             "ok" => true
         ]);
     }
-    public function destroy(Todo $todo){
+    public function destroy(Request $request, Todo $todo){
+        if($request->user()->id != $todo->user_id)
+            return $this->Forbidden("You don't have permission to delete this todo!");
         $todo->delete();
         return response()->json([
             "message" => "Successfully deleted!",
